@@ -33,7 +33,8 @@ test('includes the required inventory workflows and storage hooks', () => {
   for (const feature of ['localStorage', 'export', 'import', 'consume', 'renderItems', 'getDaysLeft', 'my-fresh-bag-inventory-v1', 'identityConfirmed', 'mergeOrInsert']) assert.ok(app.includes(feature), `missing ${feature}`);
   const html = require('node:fs').readFileSync(require('node:path').join(__dirname, 'index.html'), 'utf8');
   for (const feature of ['사진으로 등록', '바코드 등록', 'barcode-camera-button', 'barcode-image-button', 'barcode-number', '즐겨찾기', '최근 등록', 'data-filter="냉장"', 'data-filter="냉동"', 'data-filter="상온"', 'review-dialog']) assert.ok(html.includes(feature), `missing ${feature}`);
-  for (const feature of ['BarcodeDetector', '/api/lookup', 'renderNutrition', 'my-fresh-bag-history-v1', 'my-fresh-bag-favorites-v1', '다시 등록', 'delete-history']) assert.ok(app.includes(feature), `missing ${feature}`);
+  for (const feature of ['BarcodeDetector', '/api/lookup', 'renderNutrition', 'my-fresh-bag-history-v1', 'my-fresh-bag-favorites-v1', 'mfb-analysis-cache:', 'data-check-days', 'UNIT_OPTIONS', '다시 등록', 'delete-history']) assert.ok(app.includes(feature) || html.includes(feature), `missing ${feature}`);
+  assert.equal(app.includes('mfb-analysis-hashes'), false);
 });
 
 test('validates image type, content signature, byte limit, and dimensions', () => {
