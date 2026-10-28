@@ -1,0 +1,16 @@
+{
+  "name": "my-fresh-bag",
+  "version": "1.0.0",
+  "private": true,
+  "description": "가볍게 관리하는 나만의 식품 인벤토리",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test.js"
+  },
+  "dependencies": {
+    "openai": "^7.45.1"
+  }
+}

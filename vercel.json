@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "api/analyze.js": {
+      "maxDuration": 45
+    },
+    "api/lookup.js": {
+      "maxDuration": 15
+    }
+  }
+}

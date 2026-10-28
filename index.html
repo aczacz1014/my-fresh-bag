@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f8f4">
+  <meta name="description" content="우리 집 식품을 한눈에 확인하고 가볍게 관리해요.">
+  <title>My Fresh Bag — 우리 집 식품 관리</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="My Fresh Bag 홈"><span class="brand-mark" aria-hidden="true">✳</span><span>my fresh bag</span></a>
+      <div class="top-actions">
+        <button class="icon-button backup-button" id="backup-button" type="button" aria-label="데이터 백업 및 복원" title="데이터 백업 및 복원"><span aria-hidden="true">↥</span><span class="backup-label">백업 / 복원</span></button>
+        <button class="avatar" id="date-label" type="button" aria-label="오늘 날짜"></button>
+      </div>
+    </header>
+
+    <main>
+      <section class="welcome-row">
+        <div><p class="eyebrow" id="today-label"></p><h1>우리 집 식품,<br class="mobile-break"> <span>한눈에</span> 관리해요.</h1><p class="welcome-copy">냉장고 속 작은 재료까지, 잊지 않도록.</p><div class="registration-actions"><button class="scan-button" id="scan-button" type="button"><span aria-hidden="true">▧</span> 사진으로 등록 <small>영수증 · 제품 사진</small></button><button class="barcode-button" id="barcode-button" type="button"><span aria-hidden="true">▥</span> 바코드 등록</button></div></div>
+        <div class="hero-art" aria-hidden="true"><span class="hero-sun"></span><span class="hero-leaf leaf-one">✦</span><span class="hero-leaf leaf-two">✿</span><span class="hero-bag">🥬</span></div>
+      </section>
+
+      <section class="summary-grid" aria-label="재고 요약">
+        <article class="summary-card total-card"><div class="summary-top"><span class="summary-icon">▦</span><span class="summary-caption">현재 보유 중</span></div><div class="summary-value"><strong id="total-count">0</strong><span>종류</span></div><div class="summary-foot"><span class="status-dot green-dot"></span><span>내 식품 인벤토리</span></div></article>
+        <article class="summary-card fridge-card"><div class="summary-top"><span class="place-emoji">❄️</span><span class="summary-caption">냉장</span></div><div class="summary-value"><strong id="fridge-count">0</strong><span>종류</span></div><div class="summary-foot"><span>신선하게 보관 중</span></div></article>
+        <article class="summary-card freezer-card"><div class="summary-top"><span class="place-emoji">🧊</span><span class="summary-caption">냉동</span></div><div class="summary-value"><strong id="freezer-count">0</strong><span>종류</span></div><div class="summary-foot"><span>오래 보관할 식품</span></div></article>
+        <article class="summary-card pantry-card"><div class="summary-top"><span class="place-emoji">🧺</span><span class="summary-caption">상온</span></div><div class="summary-value"><strong id="pantry-count">0</strong><span>종류</span></div><div class="summary-foot"><span>든든한 팬트리</span></div></article>
+      </section>
+
+      <section class="inventory-section">
+        <div class="section-heading"><div><div class="heading-title-row"><span class="heading-spark" aria-hidden="true">✳</span><h2>내 식품 인벤토리</h2><span class="count-pill" id="visible-count">0</span></div><p>오늘도 알뜰하고 신선하게, 잘 챙겨 먹어요.</p></div><button class="primary-button add-button" id="add-button" type="button"><span aria-hidden="true">＋</span> 식품 추가</button></div>
+        <div class="toolbar"><div class="filters storage-tabs" role="tablist" aria-label="보관 장소"><button class="filter-chip active" id="tab-fridge" role="tab" aria-selected="true" aria-controls="inventory-grid" data-filter="냉장" type="button">❄️ 냉장 <span id="filter-fridge-count">0</span></button><button class="filter-chip" id="tab-freezer" role="tab" aria-selected="false" aria-controls="inventory-grid" data-filter="냉동" type="button">🧊 냉동 <span id="filter-freezer-count">0</span></button><button class="filter-chip" id="tab-pantry" role="tab" aria-selected="false" aria-controls="inventory-grid" data-filter="상온" type="button">🧺 상온 <span id="filter-pantry-count">0</span></button></div><label class="search-box"><span aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="식품 이름 검색" autocomplete="off"><kbd>⌘ K</kbd></label></div>
+        <div id="inventory-grid" class="inventory-grid" aria-live="polite"></div>
+      </section>
+
+      <footer><span class="footer-leaf">✿</span> 오늘도 맛있는 하루 보내세요 <span class="footer-leaf">✿</span><small>MY FRESH BAG · YOUR LITTLE PANTRY</small></footer>
+    </main>
+  </div>
+
+  <dialog id="item-dialog" class="modal item-modal" aria-labelledby="form-title"><form id="item-form">
+    <div class="modal-heading"><div><p class="eyebrow">YOUR PANTRY</p><h2 id="form-title">식품 추가하기</h2></div><button class="close-button" type="button" data-close="item-dialog" aria-label="닫기">×</button></div>
+    <input type="hidden" id="item-id">
+    <label class="field full-field"><span>식품 이름 <b>*</b></span><input id="item-name" name="name" maxlength="50" placeholder="예: 우유, 달걀, 바나나" required></label>
+    <div class="field-pair"><label class="field"><span>수량 <b>*</b></span><input id="item-quantity" type="number" name="quantity" min="0.01" step="any" value="1" required></label><label class="field"><span>단위 <b>*</b></span><select id="item-unit" name="unit"><option>개</option><option>봉지</option><option>팩</option><option>캔</option><option>병</option><option>통</option><option>g</option><option>kg</option><option>ml</option><option>L</option><option>인분</option><option>기타</option></select></label></div>
+    <div class="field-pair"><label class="field"><span>보관 장소 <b>*</b></span><select id="item-location" name="location"><option>냉장</option><option>냉동</option><option>상온</option></select></label><label class="field"><span>카테고리 <b>*</b></span><select id="item-category" name="category"><option>채소</option><option>과일</option><option>유제품</option><option>육류</option><option>해산물</option><option>간편식</option><option>곡류·면</option><option>간식</option><option>음료</option><option>조미료</option><option>기타</option></select></label></div>
+    <label class="field full-field"><span>소비기한 <small>포장지 확인 또는 직접 입력</small></span><input id="item-expiry" type="date" name="expiry"></label>
+    <label class="field full-field"><span>재고 확인일 <small>선택 · 소비기한이 아닙니다</small></span><input id="item-check-date" type="date" name="checkDate"></label>
+    <div class="field-pair opening-fields"><label class="field opened-check"><span>개봉 여부</span><span class="checkline"><input id="item-opened" type="checkbox" name="opened"> 이미 개봉했어요</span></label><label class="field" id="opened-date-wrap" hidden><span>개봉일</span><input id="item-opened-date" type="date" name="openedAt"></label></div>
+    <p class="storage-note" id="storage-note">보관은 제품 라벨의 표시사항을 먼저 확인해 주세요.</p><a class="food-safety-link" href="https://www.foodsafetykorea.go.kr/portal/board/boardDetail.do?bbs_no=bbs001&amp;menu_grp=MENU_NEW01&amp;menu_no=3120&amp;ntctxt_no=21709" target="_blank" rel="noopener noreferrer">식품안전나라 보관 안내 ↗</a>
+    <label class="field full-field"><span>메모 <small>선택</small></span><textarea id="item-memo" name="memo" rows="2" maxlength="160" placeholder="보관 팁이나 필요한 메모를 남겨요"></textarea></label>
+    <p class="form-error" id="form-error" role="alert"></p>
+    <div class="modal-actions"><button class="secondary-button" type="button" data-close="item-dialog">취소</button><button class="primary-button" type="submit" id="save-item-button">식품 추가</button></div>
+  </form></dialog>
+
+  <input id="photo-input" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" hidden>
+  <input id="barcode-image-input" type="file" accept="image/*" capture="environment" hidden>
+  <dialog id="barcode-dialog" class="modal barcode-modal" aria-labelledby="barcode-title"><div class="modal-heading"><div><p class="eyebrow">SCAN A PRODUCT</p><h2 id="barcode-title">바코드로 식품 등록</h2></div><button class="close-button" type="button" data-close="barcode-dialog" aria-label="닫기">×</button></div><p class="barcode-intro">제품 바코드를 스캔하거나 숫자를 입력하면 Open Food Facts에서 일치하는 상품을 찾아요.</p><div class="barcode-actions"><button class="secondary-button" type="button" id="barcode-camera-button">카메라로 스캔</button><button class="secondary-button" type="button" id="barcode-image-button">바코드 이미지 선택</button></div><video id="barcode-video" class="barcode-video" playsinline muted hidden></video><label class="field barcode-number-field"><span>바코드 숫자</span><input id="barcode-number" type="text" inputmode="numeric" autocomplete="off" placeholder="EAN-13 · UPC 숫자 입력" maxlength="14"></label><p class="barcode-hint" id="barcode-hint">카메라를 지원하지 않는 브라우저에서는 숫자를 직접 입력해 주세요.</p><p class="form-error" id="barcode-error" role="alert"></p><div class="modal-actions"><button class="secondary-button" type="button" data-close="barcode-dialog">취소</button><button class="secondary-button" type="button" id="barcode-manual-button" hidden>수동으로 등록</button><button class="primary-button" type="button" id="barcode-lookup-button">제품 조회</button></div></dialog>
+  <dialog id="review-dialog" class="modal review-modal" aria-labelledby="review-title"><div class="modal-heading"><div><p class="eyebrow">CHECK BEFORE ADDING</p><h2 id="review-title">인식 결과 확인</h2></div><button class="close-button" type="button" data-close="review-dialog" aria-label="닫기">×</button></div><p class="review-intro">AI가 읽은 정보예요. 수량과 보관 장소, 날짜를 확인하고 선택한 항목만 등록해 주세요.</p><div id="scan-status" class="scan-status" hidden></div><div id="review-list" class="review-list"></div><p id="non-food-note" class="non-food-note" hidden></p><p class="review-safety">소비기한은 포장지에서 명확하게 읽힌 경우만 표시합니다. 날짜가 보이지 않으면 비워 둡니다. 보관 장소는 제품 표시사항이 우선이며, 확실하지 않다면 직접 확인해 주세요.</p><p class="form-error" id="review-error" role="alert"></p><div class="modal-actions review-actions"><button class="secondary-button" type="button" data-close="review-dialog">취소</button><button class="primary-button" type="button" id="add-selected-button">선택 항목 등록</button></div></dialog>
+
+  <dialog id="quantity-dialog" class="modal quantity-modal"><form id="quantity-form"><div class="modal-heading"><div><p class="eyebrow">USE WHAT YOU HAVE</p><h2>얼마나 사용했나요?</h2></div><button class="close-button" type="button" data-close="quantity-dialog" aria-label="닫기">×</button></div><p class="quantity-item-name" id="quantity-item-name"></p><input type="hidden" id="quantity-item-id"><label class="field"><span>차감할 수량</span><input id="consume-amount" type="number" min="0.01" step="any" value="1" required></label><p class="form-error" id="quantity-error" role="alert"></p><div class="modal-actions"><button class="secondary-button" type="button" data-close="quantity-dialog">취소</button><button class="primary-button" type="submit">사용 완료</button></div></form></dialog>
+
+  <dialog id="backup-dialog" class="modal backup-modal"><div class="modal-heading"><div><p class="eyebrow">YOUR DATA, YOURS</p><h2>데이터 백업</h2></div><button class="close-button" type="button" data-close="backup-dialog" aria-label="닫기">×</button></div><p class="backup-copy">내 재고를 JSON 파일로 저장하거나, 이전 백업 파일을 불러올 수 있어요.</p><div class="backup-actions"><button class="backup-option" id="export-button" type="button"><span>↥</span><span><strong>JSON 파일 내보내기</strong><small>현재 인벤토리를 파일로 저장</small></span><b>→</b></button><button class="backup-option" id="import-button" type="button"><span>↧</span><span><strong>JSON 백업 불러오기</strong><small>현재 데이터를 백업으로 교체</small></span><b>→</b></button><input id="import-file" type="file" accept="application/json,.json" hidden></div><p class="form-error" id="backup-error" role="alert"></p></dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="lib/inventory-data.js" defer></script><script src="app.js" defer></script>
+</body>
+</html>
