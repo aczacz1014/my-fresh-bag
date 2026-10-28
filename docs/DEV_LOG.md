@@ -63,3 +63,11 @@
 - **적용한 해결 방법:** Git과 Vercel 제외 규칙에 `backups/`를 추가하고 `.env*`(예시 파일 제외), `node_modules/`, `.vercel/` 규칙을 확인했습니다. Vercel 런타임은 `VERCEL=1`일 때 `AI_FEATURES_ENABLED=true`가 없으면 `/api/analyze`의 이미지 AI와 `/api/lookup`의 OpenAI 웹 검색을 차단합니다. Open Food Facts 직접 조회와 수동 인벤토리는 유지됩니다. 격리된 Chrome 프로필의 예시 재고로 메인/바코드/수동 등록 화면을 캡처했습니다.
 - **테스트 결과:** 최종 `npm test`: 22개 통과. AI 기능의 Vercel 기본 차단 및 OpenAI 웹 검색 폴백 차단 테스트를 추가했습니다. 관련 JavaScript 구문 검사와 `vercel.json` 파싱/서버리스 파일 경로 검증을 완료했습니다. 주요 화면 PNG는 `docs/screenshots/`에 있으며 실제 사용자 저장 데이터나 사진은 사용하지 않았습니다.
 - **배포 단계 및 한계:** GitHub 저장소 [aczacz1014/my-fresh-bag](https://github.com/aczacz1014/my-fresh-bag)를 만들고 `main`을 push했습니다. Vercel CLI 65.5.0은 설치해 상태를 확인했으나 로그아웃 상태였고 Vercel 프로젝트 연결도 없어 실제 호스팅 배포는 수행하지 못했습니다. Vercel에서 GitHub 저장소를 import하고 framework preset은 Other, build command는 비우고 output directory는 `.`로 설정하면 됩니다. 비용 보호를 유지하려면 Vercel 환경 변수에 `OPENAI_API_KEY`와 `AI_FEATURES_ENABLED=true`를 설정하지 마세요. 공개 AI 활성화 전에는 인증과 공유형 제한을 추가해야 합니다.
+
+## 2026-10-28 — 최종 제출용 History/Favorites 및 배포 점검
+
+- **문제 상황:** 기존 등록 흐름은 정상 작동했지만 같은 제품을 다시 찾거나 즐겨찾는 식품을 빠르게 추가할 기록 UI가 없었습니다. Vercel은 공개 API의 공유형 인증이 없어 AI를 무조건 활성화하면 비용 위험이 남았습니다.
+- **AI에게 요청한 내용:** 최근 등록 식품과 즐겨찾기를 localStorage에 저장하고 한 번의 버튼으로 새 등록을 시작하되, 과거 구매일과 소비기한은 복사하지 않도록 요청했습니다. Vercel AI 활성화 조건도 함께 확인했습니다.
+- **적용한 해결 방법:** `my-fresh-bag-history-v1`, `my-fresh-bag-favorites-v1`를 기존 인벤토리 키와 분리했습니다. 식품 등록 시 최근 기록을 저장하고 카드의 별 버튼으로 즐겨찾기를 유지합니다. 최근/즐겨찾기 항목은 이름·브랜드·용량·이미지를 보여주며 `다시 등록`은 수량 1과 빈 날짜로 수동 등록 화면을 엽니다. 기록 삭제와 즐겨찾기 해제를 추가했습니다. Vercel에서 `AI_FEATURES_ENABLED=true`가 없으면 사진 AI와 OpenAI 웹 검색을 차단하는 안전 기본값은 유지했습니다.
+- **실제 결과:** `npm test` 22개 통과, `node --check app.js` 통과. Chrome headless `--dump-dom`으로 새 History/Favorites 섹션과 바코드 버튼이 렌더링되는 것을 확인했습니다. 실제 카메라·Vercel 공개 배포·History 클릭 저장은 이 환경에서 직접 확인하지 못했습니다.
+- **남은 한계:** 공개 AI를 켜려면 인증 또는 서버 측 접근 토큰과 공유형 rate limit이 먼저 필요합니다. 현재는 사용자가 Vercel에서 키와 플래그를 넣어도 보호 장치가 없으면 AI가 켜지지 않는 안전한 상태입니다. Vercel CLI가 로그아웃되어 자동 배포 성공 여부는 확인하지 못했습니다.

@@ -1,6 +1,8 @@
 (() => {
   'use strict';
   const STORAGE_KEY = 'my-fresh-bag-inventory-v1';
+  const HISTORY_KEY = 'my-fresh-bag-history-v1';
+  const FAVORITES_KEY = 'my-fresh-bag-favorites-v1';
   const $ = (selector) => document.querySelector(selector);
   const grid = $('#inventory-grid');
   const itemDialog = $('#item-dialog');
@@ -22,6 +24,9 @@
   let barcodeDetector = null;
   let barcodeScanActive = false;
   let barcodeProductDraft = null;
+  let historyDraft = null;
+  let history = loadJson(HISTORY_KEY);
+  let favorites = loadJson(FAVORITES_KEY);
 
   const icons = { 채소: '🥬', 과일: '🍎', 유제품: '🥛', 육류: '🥩', 해산물: '🐟', 간편식: '🍱', '곡류·면': '🍜', 간식: '🍪', 음료: '🧃', 조미료: '🧂', 기타: '🛍️' };
   const tones = { 채소: 'green', 과일: 'pink', 유제품: 'blue', 육류: 'pink', 해산물: 'blue', 간편식: 'yellow', '곡류·면': 'yellow', 간식: 'orange', 음료: 'purple', 조미료: 'green', 기타: 'green' };
@@ -42,6 +47,21 @@
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); return true; }
     catch { showToast('저장 공간이 부족해요. 백업 후 항목을 정리해 주세요.'); return false; }
   }
+
+  function loadJson(key) {
+    try { const value = JSON.parse(localStorage.getItem(key) || '[]'); return Array.isArray(value) ? value : []; } catch { return []; }
+  }
+  function saveJson(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; } }
+  function historyShape(item) { return { name: item.name, brand: item.brand || '', packageQuantity: item.packageQuantity || '', productType: item.productType || '', category: item.category, location: item.location, unit: item.unit, productImageUrl: item.productImageUrl || '', photo: item.photo || '', barcode: item.barcode || '', nutrition: item.nutrition || null, savedAt: new Date().toISOString() }; }
+  function addHistory(item) { const record = historyShape(item); history = [record, ...history.filter((entry) => `${entry.name}|${entry.brand}|${entry.packageQuantity}` !== `${record.name}|${record.brand}|${record.packageQuantity}`)].slice(0, 10); saveJson(HISTORY_KEY, history); renderQuickAccess(); }
+  function toggleFavorite(item) { const key = `${item.name}|${item.brand || ''}|${item.packageQuantity || ''}`; const exists = favorites.some((entry) => entry.key === key); favorites = exists ? favorites.filter((entry) => entry.key !== key) : [{ ...historyShape(item), key, savedAt: new Date().toISOString() }, ...favorites].slice(0, 30); saveJson(FAVORITES_KEY, favorites); renderItems(); renderQuickAccess(); }
+  function isFavorite(item) { const key = `${item.name}|${item.brand || ''}|${item.packageQuantity || ''}`; return favorites.some((entry) => entry.key === key); }
+  function quickImage(item) { return item.photo || item.productImageUrl || foodImage(item); }
+  function renderQuickAccess() {
+    const render = (entries, type) => entries.length ? entries.map((entry, index) => `<div class="quick-item"><img src="${escapeHtml(quickImage(entry))}" alt=""><div><strong>${escapeHtml(entry.name)}</strong><small>${escapeHtml([entry.brand, entry.packageQuantity].filter(Boolean).join(' · ') || entry.category || '식품')}</small></div><button type="button" data-quick-action="register" data-quick-type="${type}" data-quick-index="${index}">다시 등록</button>${type === 'history' ? `<button class="quick-delete" type="button" data-quick-action="delete-history" data-quick-index="${index}" aria-label="기록 삭제">×</button>` : ''}</div>`).join('') : '<p class="quick-empty">아직 기록이 없어요.</p>';
+    $('#favorites-list').innerHTML = render(favorites, 'favorite'); $('#history-list').innerHTML = render(history, 'history');
+  }
+  function registerFromQuick(entry) { historyDraft = { ...entry }; openNewItem(); $('#item-name').value = entry.name || ''; $('#item-quantity').value = '1'; $('#item-unit').value = entry.unit || '개'; $('#item-category').value = entry.category || '기타'; $('#item-location').value = entry.location || '상온'; $('#item-expiry').value = ''; $('#item-check-date').value = ''; $('#item-opened').checked = false; $('#item-opened-date').value = ''; $('#storage-note').textContent = '새 구매 제품의 날짜는 비워 두었습니다. 포장 라벨을 확인해 주세요.'; }
 
   function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
@@ -125,6 +145,7 @@
       const checkBasis = item.checkDate && item.checkDateBasis ? `<p class="card-storage-note">확인 기준: ${escapeHtml(item.checkDateBasis)}${item.checkDateSourceUrl ? ` · <a href="${escapeHtml(item.checkDateSourceUrl)}" target="_blank" rel="noopener noreferrer">출처</a>` : ''}</p>` : '';
       return `<article class="food-card ${Number(item.quantity) === 0 ? 'out-of-stock' : ''}" data-id="${escapeHtml(item.id)}"><div class="card-photo"><img src="${escapeHtml(foodImage(item))}" alt="${escapeHtml(item.name)} 식품 이미지" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="photo-fallback" hidden>${icons[item.category] || icons.기타}</span><button class="card-menu" type="button" data-action="menu" aria-label="${escapeHtml(item.name)} 관리 메뉴" aria-expanded="false">···</button></div><p class="food-name">${escapeHtml(item.name)}${item.brand ? `<small class="food-brand">${escapeHtml(item.brand)}</small>` : ''}</p>${item.packageQuantity ? `<p class="card-storage-note">${escapeHtml(item.packageQuantity)}</p>` : ''}<div class="food-meta"><span>${escapeHtml(item.category)}</span><span class="meta-dot"></span><span>${locations[item.location]}</span></div><div class="card-divider"></div><div class="card-bottom"><span class="expiry-label ${expiry.className}">${expiry.text}</span><div class="quantity-control" aria-label="${escapeHtml(item.name)} 수량 조절"><button type="button" data-action="decrease" aria-label="${escapeHtml(item.name)} 수량 감소" ${Number(item.quantity) <= 0 ? 'disabled' : ''}>−</button><strong>${formatQuantity(item.quantity)}<small>${escapeHtml(item.unit)}</small></strong><button type="button" data-action="increase" aria-label="${escapeHtml(item.name)} 수량 증가">＋</button></div></div>${Number(item.quantity) === 0 ? '<span class="stock-empty">재고 없음 · +로 다시 추가</span>' : ''}${nutrition}${storageDetails ? `<p class="card-storage-note">${escapeHtml(storageDetails)}</p>` : ''}${memo}${note}${checkBasis}${productSource}<div class="card-actions" hidden><button type="button" data-action="consume" ${Number(item.quantity) <= 0 ? 'disabled' : ''}>수량 차감</button><button type="button" data-action="edit">수정</button><button type="button" data-action="finish">소진 처리</button><button type="button" data-action="delete">삭제</button></div></article>`;
     }).join('');
+    grid.querySelectorAll('.food-card').forEach((card) => { const item = byId(card.dataset.id); const photo = card.querySelector('.card-photo'); if (item && photo && !photo.querySelector('.favorite-toggle')) photo.insertAdjacentHTML('beforeend', `<button class="favorite-toggle ${isFavorite(item) ? 'active' : ''}" type="button" data-action="favorite" aria-label="${escapeHtml(item.name)} 즐겨찾기">${isFavorite(item) ? '★' : '☆'}</button>`); });
   }
 
   function renderNutrition(item) {
@@ -171,7 +192,8 @@
     const identifiedProduct = barcodeProductDraft?.product ? barcodeProductDraft : null;
     const entry = { ...existing, id: id || (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`), name, brand: identifiedProduct?.product.brand || existing?.brand || '', productType: identifiedProduct?.product.productType || existing?.productType || '', packageQuantity: identifiedProduct?.product.packageQuantity || existing?.packageQuantity || '', barcode: identifiedProduct?.barcode || (barcodeProductDraft?.manual ? barcodeProductDraft.barcode : existing?.barcode || ''), productImageUrl: identifiedProduct?.product.imageUrl || existing?.productImageUrl || '', productSource: identifiedProduct?.source || existing?.productSource || null, nutrition: identifiedProduct?.product.nutrition || existing?.nutrition || null, quantity, unit: $('#item-unit').value, location: $('#item-location').value, category: $('#item-category').value, expiry, expirySource: expiry ? (existing?.expiry === expiry ? existing.expirySource : 'user') : 'none', checkDate: $('#item-check-date').value, checkDateSource: $('#item-check-date').value ? 'user' : '', opened: $('#item-opened').checked, openedAt: $('#item-opened').checked ? $('#item-opened-date').value : '', memo: $('#item-memo').value.trim(), createdAt: existing?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() };
     if (existing) items = items.map((item) => item.id === id ? entry : item); else mergeOrInsert(entry);
-    saveItems(); itemDialog.close(); renderItems(); barcodeProductDraft = null; showToast(existing ? '식품 정보를 수정했어요.' : '식품을 추가했어요.');
+    if (!existing) addHistory(entry);
+    saveItems(); itemDialog.close(); renderItems(); barcodeProductDraft = null; historyDraft = null; showToast(existing ? '식품 정보를 수정했어요.' : '식품을 추가했어요.');
   });
 
   function mergeOrInsert(entry) {
@@ -498,6 +520,7 @@
       const expirySource = draft.actualExpiry ? (draft.expiryEdited ? 'user' : 'label') : (savedExpiry ? 'manufacturer-calculated' : 'none');
       const entry = { id: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`, name: draft.name.trim(), brand: (draft.brand || '').trim(), productType: draft.productType || '', variant: draft.variant || '', packageQuantity: draft.packageQuantity || '', nutrition: draft.nutrition || null, unopenedStorage: draft.unopenedStorage || '', openedStorage: draft.openedStorage || '', shelfLifeDays: draft.shelfLifeDays || null, shelfLifeBasis: draft.shelfLifeBasis || '', productSources: [...(draft.productInfo?.sources || []), ...(draft.productInfo?.source ? [draft.productInfo.source] : [])], quantity: draft.quantity, unit: draft.unit.trim(), location: draft.storage, category: draft.category, expiry: savedExpiry, expirySource, expiryEvidence: draft.actualExpiry ? (draft.expiryEdited ? '사용자가 확인 또는 수정' : draft.expiryEvidence || '') : (savedExpiry ? `${draft.manufacturingDate} + ${draft.shelfLifeDays}일 · 제조사 정보` : ''), barcode: (draft.barcode || '').replace(/\D/g, '').slice(0,14), manufacturingDate: draft.manufacturingDate || '', manufacturingDateEvidence: draft.manufacturingDateEvidence || '', purchaseDate: draft.purchaseDate || '', productImageUrl: draft.productInfo?.exact ? draft.productInfo.product.imageUrl || '' : '', productSource: draft.productInfo?.exact ? draft.productInfo.source : null, checkDate, checkDateSource: labelCheckDate ? 'label-opened-guidance' : (checkDate ? 'official-storage-guideline' : ''), checkDateBasis, checkDateSourceUrl, opened: Boolean(draft.opened), openedAt, openedGuidance: draft.openedGuidance || '', openedGuidanceDays: Number.isInteger(draft.openedGuidanceDays) ? draft.openedGuidanceDays : null, storageEvidence: draft.storageEvidence || '', photo: draft.usePhoto ? scanImagePreviewUrl : '', memo: '', createdAt: now.toISOString(), updatedAt: now.toISOString() };
       mergeOrInsert(entry);
+      addHistory(entry);
     }
     saveItems(); reviewDialog.close(); renderItems(); showToast(`${selected.length}개 식품을 등록했어요.`);
   });
@@ -511,6 +534,7 @@
     const card = button.closest('.food-card'); if (!card) return;
     const item = byId(card.dataset.id); if (!item) return;
     const action = button.dataset.action;
+    if (action === 'favorite') { toggleFavorite(item); showToast(isFavorite(item) ? '즐겨찾기에 추가했어요.' : '즐겨찾기에서 뺐어요.'); return; }
     if (action === 'menu') {
       const menu = card.querySelector('.card-actions'); const open = menu.hidden;
       grid.querySelectorAll('.card-actions').forEach((element) => { element.hidden = true; element.closest('.food-card').querySelector('.card-menu').setAttribute('aria-expanded', 'false'); });
@@ -547,6 +571,7 @@
     activeFilter = chip.dataset.filter; document.querySelectorAll('.filter-chip').forEach((entry) => { entry.classList.toggle('active', entry === chip); entry.setAttribute('aria-selected', String(entry === chip)); }); renderItems();
   }));
   $('#search-input').addEventListener('input', (event) => { searchTerm = event.target.value.trim(); renderItems(); });
+  document.querySelector('.utility-section').addEventListener('click', (event) => { const button = event.target.closest('[data-quick-action]'); if (!button) return; const type = button.dataset.quickType; const index = Number(button.dataset.quickIndex); if (button.dataset.quickAction === 'delete-history') { history.splice(index, 1); saveJson(HISTORY_KEY, history); renderQuickAccess(); return; } const entry = (type === 'favorite' ? favorites : history)[index]; if (entry) registerFromQuick(entry); });
   $('#add-button').addEventListener('click', openNewItem);
   $('#scan-button').addEventListener('click', selectPhoto);
   $('#barcode-button').addEventListener('click', openBarcodeRegistration);
@@ -590,4 +615,5 @@
   $('#today-label').textContent = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }).format(today);
   $('#date-label').textContent = String(today.getDate());
   renderItems();
+  renderQuickAccess();
 })();
